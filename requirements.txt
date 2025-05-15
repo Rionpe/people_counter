@@ -1,0 +1,7 @@
+ultralytics==8.3.134
+opencv-python==4.10.0.84
+streamlink==7.3.0
+yt-dlp==2025.4.30
+pandas==2.2.3
+torch==2.7.0
+torchvision==0.22.0
