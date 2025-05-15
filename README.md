@@ -5,9 +5,9 @@ cd {프로젝트_폴더_경로}
 # 1. 가상 환경 생성
 python -m venv venv
 
-# 2. 가상 환경 활성화 (macOS/Linux)
-source venv/bin/activate
-{가상환경_이름}\Scripts\activate
+# 2. 가상 환경 활성화
+source venv/bin/activate  (macOS/Linux)
+{가상환경_이름}\Scripts\activate  (Windows)
 
 # 3. 필요한 패키지 설치
 pip install -r requirements.txt
