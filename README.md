@@ -7,7 +7,12 @@ python -m venv venv
 
 # 2. 가상 환경 활성화
 source venv/bin/activate  (macOS/Linux)
-{가상환경_이름}\Scripts\activate  (Windows)
+venv\Scripts\activate.bat  (Windows)
+
+# 실행 정책 변경
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+Get-ExecutionPolicy -List
+.\venv\Scripts\Activate.ps1
 
 # 3. 필요한 패키지 설치
 pip install -r requirements.txt
@@ -18,6 +23,6 @@ pip install pyinstaller
 # 5. 실행 파일 빌드
 pyinstaller --noconfirm --windowed --onefile gui.py
 
-# 빌드 완료 메시지
+# create exe
 echo "빌드 완료! 실행 파일은 dist/ 폴더 내에 생성"
 ```
