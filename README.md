@@ -42,15 +42,15 @@ dataset = version.download("yolov11")
 from ultralytics import YOLO
 
 def main():
-    model = YOLO("yolo11m.pt")
+    model = YOLO("yolo11n.pt")
     results = model.train(
         data=r"C:\Users\COM\Documents\GitHub\people_counter\People-Detection-8\data.yaml",
-        epochs=100,
-        imgsz=640,
+        epochs=10,
+        imgsz=416,
         classes=[0], 
         name='yolov11-person',
-        batch=16,
-        resume=False,
+        batch=4,
+        resume=True,
         save=False,
         save_txt=False,
         plots=False
@@ -59,6 +59,21 @@ def main():
 if __name__ == '__main__':
     main()
 
+
+# 추론
+from ultralytics import YOLO
+
+def main():
+    # 학습된 모델 로드
+    model = YOLO("runs/detect/yolov11-person/weights/best.pt")  # 또는 last.pt
+
+    # 이미지/폴더/영상 추론
+    # results = model.predict(source="sample.jpg", show=True, conf=0.3)
+    # results = model.predict(source="folder_path/", show=True, conf=0.3)
+    # results = model.predict(source="video.mp4", show=True, conf=0.3)
+
+if __name__ == "__main__":
+    main()
 
 
                 
