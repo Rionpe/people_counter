@@ -30,35 +30,38 @@ echo "빌드 완료! 실행 파일은 dist/ 폴더 내에 생성"
 
 ```
 # 데이터셋 검색 후 다운로드
+* https://universe.roboflow.com/mohamed-traore-2ekkp/face-detection-mik1i/model/25
 https://universe.roboflow.com/leo-ueno/people-detection-o4rdr/dataset/8
 //.py
 from roboflow import Roboflow
 rf = Roboflow(api_key="apikey")
-project = rf.workspace("leo-ueno").project("people-detection-o4rdr")
-version = project.version(8)
+project = rf.workspace("mohamed-traore-2ekkp").project("face-detection-mik1i")
+version = project.version(25)
 dataset = version.download("yolov11")
 
 # training
-from ultralytics import YOLO
-
+1. yolo11n.pt를 기반으로 data.yaml을 가중치로 더함
 def main():
-    model = YOLO("yolo11n.pt")
+    model = YOLO('yolo11n.pt')
     results = model.train(
-        data=r"C:\Users\COM\Documents\GitHub\people_counter\People-Detection-8\data.yaml",
-        epochs=10,
-        imgsz=416,
-        classes=[0], 
-        name='yolov11-person',
-        batch=4,
-        resume=True,
-        save=False,
-        save_txt=False,
-        plots=False
+         data=r"C:\Users\COM\Documents\GitHub\people_counter\Face-Detection-25\data.yaml",
+         epochs=100,
+         imgsz=416,
+         batch=8
     )
 
 if __name__ == '__main__':
     main()
 
+2. 만들어진 best.pt 로드후 사용
+
+model = YOLO(r'C:\Users\COM\Documents\GitHub\people_counter\runs\detect\train\weights\best.pt')
+
+3. 중지후 재실행 하려면?
+model = YOLO(r'C:\Users\COM\Documents\GitHub\people_counter\runs\detect\train\weights\last.pt')
+results = model.train(
+      resume=True
+)
 
 # 추론
 from ultralytics import YOLO
