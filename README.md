@@ -26,3 +26,40 @@ pyinstaller --noconfirm --windowed {--onefile} gui.py
 # create exe
 echo "빌드 완료! 실행 파일은 dist/ 폴더 내에 생성"
 ```
+
+
+```
+# 데이터셋 검색 후 다운로드
+https://universe.roboflow.com/leo-ueno/people-detection-o4rdr/dataset/8
+//.py
+from roboflow import Roboflow
+rf = Roboflow(api_key="apikey")
+project = rf.workspace("leo-ueno").project("people-detection-o4rdr")
+version = project.version(8)
+dataset = version.download("yolov11")
+
+# training
+from ultralytics import YOLO
+
+def main():
+    model = YOLO("yolo11m.pt")
+    results = model.train(
+        data=r"C:\Users\COM\Documents\GitHub\people_counter\People-Detection-8\data.yaml",
+        epochs=100,
+        imgsz=640,
+        classes=[0], 
+        name='yolov11-person',
+        batch=16,
+        resume=False,
+        save=False,
+        save_txt=False,
+        plots=False
+    )
+
+if __name__ == '__main__':
+    main()
+
+
+
+                
+```
