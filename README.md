@@ -21,7 +21,7 @@ pip install -r requirements.txt
 pip install pyinstaller
 
 # 5. 실행 파일 빌드
-pyinstaller --noconfirm --windowed {--onefile} gui.py
+pyinstaller --noconfirm --console gui.py
 
 # create exe
 echo "빌드 완료! 실행 파일은 dist/ 폴더 내에 생성"
@@ -80,4 +80,8 @@ if __name__ == "__main__":
 
 
                 
+```
+
+```
+https://github.com/akanametov/yolo-face?tab=readme-ov-file
 ```
