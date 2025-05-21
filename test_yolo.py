@@ -1,4 +1,5 @@
 import cv2
+cv2.waitKey = lambda x=0: -1
 import streamlink
 from ultralytics import YOLO
 import pandas as pd
@@ -10,6 +11,8 @@ import time
 
 import threading
 import queue
+
+# # ffmpeg
 
 # import torch
 # import torchvision
@@ -50,6 +53,7 @@ import queue
     # print(device)
     # model.to(device)
     # # end
+    # roboflow
     
 frame_queue = queue.Queue()
 result_queue = queue.Queue()
@@ -59,12 +63,12 @@ max_people = 0
 total_people = 0
 frame_count = 0
 
-model_name = "yolo11m.pt"
+model_name = "yolov11m-face.pt"
 output_directory = "/Users/yoon/local/people-counter/"
 csv_filename = "people_counting.csv"
 source_type = "YouTube URL"
 url = "https://www.youtube.com/watch?v=HdzniTPezs8"
-conf = 0.3
+conf = 0.35
 iou = 0.5
 show = False
 stream_active = True
@@ -146,7 +150,7 @@ def load_settings():
     try:
         with open("settings.json", "r") as f:
             settings = json.load(f)
-            model_name = settings.get("model", "yolo11m.pt")
+            model_name = settings.get("model", "yolov11m-face.pt")
             output_directory = settings.get("output_directory", "/Users/yoon/local/people-counter/")
             csv_filename = settings.get("csv_filename", "people_counting.csv")
             source_type = settings.get("source", "YouTube URL")
@@ -178,10 +182,9 @@ def get_youtube_url(input_url, log_callback=None):
 def tracking_thread(model, log_callback=None):
     global stream_active, max_people, total_people, frame_count
 
-    log_callback(f"모델명 = {model_name}")
     log_callback(f"저장폴더 = {output_directory}")
     log_callback(f"파일명 = {csv_filename}")
-
+    log_callback(f"모델명 = {model_name}")
     log_callback(f"url = {url}")
     log_callback(f"conf = {conf}")
     log_callback(f"iou = {iou}")
@@ -191,12 +194,13 @@ def tracking_thread(model, log_callback=None):
     results = model.track(
         source=get_youtube_url(url, log_callback),
         device='cuda',
+        tracker='bytetrack.yaml',
         show=False,
         stream=True,
-        classes=[0],
+        # classes=[0],
         conf=conf,
         iou=iou,
-        imgsz=480,
+        imgsz=640,
     )
 
     tracked_ids = set()
@@ -243,28 +247,37 @@ def track_people(frame_callback=None, log_callback=None):
     global stream_active
 
     load_settings()
-    
+
     model = YOLO(model_name)
+    print(model.names)
     threading.Thread(target=tracking_thread, args=(model, log_callback), daemon=True).start()
 
     log_callback("👀 추적 시작")
     stream_active = True
     start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+    
     while stream_active:
         if show:
             if not result_queue.empty():
                     frame, boxes = result_queue.get()
 
                     if boxes is not None:
-                        for box in boxes.xyxy:
+                        for i, box in enumerate(boxes.xyxy):
                             x1, y1, x2, y2 = map(int, box)
+                            conf = boxes.conf[i].item()
+                            
                             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
+                            
+                            text = f'{conf:.2f}'
+                            cv2.putText(frame, text, (x1, y1 - 10), 
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                            
+                    max_text = f"Max People: {max_people}"
+                    cv2.putText(frame, max_text, (10, 30), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 3)
+        
                     if frame_callback:
                         frame_callback(frame)
         time.sleep(0.01)
     
     on_stream_end(start_time, log_callback)
-
-# # ffmpeg

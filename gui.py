@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import scrolledtext
 import json
 import threading
 import os
@@ -41,10 +40,10 @@ root.geometry("800x850")
 
 # 모델 선택
 tk.Label(root, text="모델 선택:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
-model_var = tk.StringVar(value="yolo11m.pt")
+model_var = tk.StringVar(value="yolov11m-face.pt")
 model_frame = tk.Frame(root)
 model_frame.grid(row=0, column=1, padx=10, pady=5, sticky="w")
-for model in ["yolo11n.pt", "yolo11m.pt", "yolo11s.pt"]:
+for model in ["yolov11n-face.pt", "yolov11s-face.pt", "yolov11m-face.pt"]:
     tk.Radiobutton(model_frame, text=model, variable=model_var, value=model).pack(side=tk.LEFT)
 
 # 결과 저장 폴더
@@ -129,7 +128,7 @@ def load_settings():
     try:
         with open("settings.json", "r") as f:
             settings = json.load(f)
-        model_var.set(settings.get("model", "yolo11m.pt"))
+        model_var.set(settings.get("model", "yolov11m-face.pt"))
         set_entry(output_entry, settings.get("output_directory", "/Users/yoon/local/people-counter/"))
         set_entry(csv_entry, settings.get("csv_filename", "people_counting.csv"))
         source_var.set(settings.get("source", "YouTube URL"))
@@ -145,14 +144,14 @@ def load_settings():
     toggle_source_input()
 
 def load_settings_init():
-    model_var.set("yolo11m.pt")
+    model_var.set("yolov11m-face.pt")
     set_entry(output_entry, "/Users/yoon/local/people-counter/")
     set_entry(csv_entry, "people_counting.csv")
     source_var.set("YouTube URL")
     set_entry(source_input, "https://www.youtube.com/watch?v=xxxx")
-    set_entry(conf_entry, "0.3")
+    set_entry(conf_entry, "0.35")
     set_entry(iou_entry, "0.5")
-    show_entry.set(False)
+    show_entry.set(True)
     log_message("초기화 완료.")
     toggle_source_input()
 
@@ -195,6 +194,7 @@ video_label.grid(row=10, column=0, columnspan=2, sticky="nsew")
 
 import cv2
 from PIL import Image, ImageTk
+cv2.waitKey = lambda x=0: -1
 
 def show_frame_in_gui(frame):
     # OpenCV → PIL → ImageTk
