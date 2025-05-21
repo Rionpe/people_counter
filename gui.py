@@ -11,6 +11,8 @@ log_queue = queue.Queue()
 def log_message_from_queue():
     while not log_queue.empty():
         msg = log_queue.get_nowait()
+        if isinstance(msg, dict):
+            msg = json.dumps(msg, ensure_ascii=False)
         log_text.config(state='normal')
         log_text.insert(tk.END, msg + "\n")
         log_text.see(tk.END)

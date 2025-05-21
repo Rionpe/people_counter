@@ -181,75 +181,72 @@ def get_youtube_url(input_url, log_callback=None):
         
 def tracking_thread(model, log_callback=None):
     global stream_active, max_people, total_people, frame_count
+    try:
+        log_callback("tracking_thread 시작")
+        log_callback(f"URL에서 스트림 가져오기 시도: {url}")
+        source_url = get_youtube_url(url, log_callback)
+        log_callback(f"스트림 URL 획득: {source_url}")
 
-    log_callback(f"저장폴더 = {output_directory}")
-    log_callback(f"파일명 = {csv_filename}")
-    log_callback(f"모델명 = {model_name}")
-    log_callback(f"url = {url}")
-    log_callback(f"conf = {conf}")
-    log_callback(f"iou = {iou}")
-    log_callback(f"show = {show}")
-    log_callback(f"stream_active = {stream_active}")
+        results = model.track(
+            source=source_url,
+            device='cuda',
+            tracker='bytetrack.yaml',
+            show=False,
+            stream=True,
+            conf=conf,
+            iou=iou,
+            imgsz=640,
+        )
+        log_callback("model.track 호출 완료, 결과 수신 대기 시작")
+        tracked_ids = set()
+        last_log_time = 0
 
-    results = model.track(
-        source=get_youtube_url(url, log_callback),
-        device='cuda',
-        tracker='bytetrack.yaml',
-        show=False,
-        stream=True,
-        # classes=[0],
-        conf=conf,
-        iou=iou,
-        imgsz=640,
-    )
+        for result in results:
+            if not stream_active:
+                log_callback("추적쓰레드 종료합니다.")
+                stop_stream(log_callback=log_callback)
+                break
 
-    tracked_ids = set()
-    last_log_time = 0
+            if result is None or getattr(result, "path", None) is None:
+                log_callback("스트림이 끊어졌습니다. 종료합니다.")
+                stop_stream(log_callback=log_callback)
+                break
 
-    for result in results:
-        if not stream_active:
-            log_callback("추적쓰레드 종료합니다.")
-            stop_stream(log_callback=log_callback)
-            break
+            frame = result.orig_img.copy()
+            boxes = result.boxes
 
-        if result is None or getattr(result, "path", None) is None:
-            log_callback("스트림이 끊어졌습니다. 종료합니다.")
-            stop_stream(log_callback=log_callback)
-            break
+            new_ids = {
+                getattr(box, "id", None)
+                for box in boxes
+                if getattr(box, "id", None) not in tracked_ids
+            }
+            new_ids.discard(None)
 
-        frame = result.orig_img.copy()
-        boxes = result.boxes
+            people_count = len(new_ids)
+            tracked_ids.update(new_ids)
 
-        new_ids = {
-            getattr(box, "id", None)
-            for box in boxes
-            if getattr(box, "id", None) not in tracked_ids
-        }
-        new_ids.discard(None)
+            max_people = max(max_people, people_count)
+            total_people += people_count
+            frame_count += 1
 
-        people_count = len(new_ids)
-        tracked_ids.update(new_ids)
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if time.time() - last_log_time >= 1:
+                log_callback(f"[{timestamp}] 사람 수: {people_count}")
+                last_log_time = time.time()
 
-        max_people = max(max_people, people_count)
-        total_people += people_count
-        frame_count += 1
-
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if time.time() - last_log_time >= 1:
-            log_callback(f"[{timestamp}] 사람 수: {people_count}")
-            last_log_time = time.time()
-
-        frame_data.append({"time": timestamp, "people": people_count})
-        result_queue.put((frame, boxes))
+            frame_data.append({"time": timestamp, "people": people_count})
+            result_queue.put((frame, boxes))
+    except Exception as e:
+        log_callback(f"tracking_thread 에러 발생: {e}")
 
 import time
 def track_people(frame_callback=None, log_callback=None):
     global stream_active
-
+    
     load_settings()
 
     model = YOLO(model_name)
-    print(model.names)
+    log_callback(model.names)
     threading.Thread(target=tracking_thread, args=(model, log_callback), daemon=True).start()
 
     log_callback("👀 추적 시작")
