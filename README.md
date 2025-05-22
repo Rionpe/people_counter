@@ -21,7 +21,7 @@ pip install -r requirements.txt
 pip install pyinstaller
 
 # 5. 실행 파일 빌드
-pyinstaller --noconfirm --console gui.py
+pyinstaller --noconfirm {--console/--windowed} gui.py
 
 # create exe
 echo "빌드 완료! 실행 파일은 dist/ 폴더 내에 생성"
