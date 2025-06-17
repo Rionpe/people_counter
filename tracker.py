@@ -3,13 +3,11 @@ import datetime
 import pandas as pd
 import queue
 import cv2
-import streamlink
 import yt_dlp
 from ultralytics import YOLO
 from pathlib import Path
 import time
 import json
-import yt_dlp
 
 def get_youtube_title(url: str, log_callback=None) -> str:
         ydl_opts = {
@@ -17,6 +15,7 @@ def get_youtube_title(url: str, log_callback=None) -> str:
             'force_generic_extractor': True,
             'extract_flat': True,
         }
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             title = info.get('title', 'unknown_title')
@@ -54,7 +53,7 @@ class PeopleTracker:
             "model": "yolov11m-face.pt",
             "output_directory": "./output/",
             "csv_filename": "people_counting.csv",
-            "source": "YouTube URL",
+            "source": "Y",
             "url": "",
             "conf": 0.35,
             "iou": 0.5,
@@ -91,22 +90,28 @@ class PeopleTracker:
             self._thread.join(timeout=1)
         cv2.destroyAllWindows()
         self.log("🛑 PeopleTracker stopped")
-
+        
     def _get_stream_url(self, url: str):
         with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
             info = ydl.extract_info(url, download=False)
             if info.get('is_live', False):
                 self.log("🔴 실시간 스트리밍 감지")
-                streams = streamlink.streams(url)
-                return streams.get('best').url, True
-        self.log("🎞 VOD 감지")
-        return url, False
-
+                url = info.get("url")
+                # streams = streamlink.streams(url)
+                # if not streams or "best" not in streams:
+                #     self.log("❌ 스트림을 찾을 수 없습니다.")
+                #     return None, True
+                # stream_url = streams["best"].url
+                return url, True
+            self.log("🎞 일반 VOD 영상 감지")
+            return url, False
+        
     def _run(self):
         model = YOLO(self.settings['model'])
         self.log(f"🚀 모델 로드: {self.settings['model']}")
-
-        stream_url, is_live = self._get_stream_url(self.settings['url'])
+        stream_url, is_live = self.settings['url'], True
+        if(self.settings['source'] == 'Y'):
+            stream_url, is_live = self._get_stream_url(stream_url)
         self.log(f"📽 Stream URL: {stream_url}")
 
         start_time = datetime.datetime.now()
@@ -197,14 +202,15 @@ class PeopleTracker:
                 cv2.putText(frame, f"{conf:.2f}",(x1,y1-10),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0),2)
                 cv2.putText(frame, f"ID:{int(bid)}",(x1,y2+20),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,0),2)
             cv2.putText(frame,f"Max:{self.max_people} Now:{count}",(10,30),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
-
-            if is_live:
-                # 실시간: 별도 OpenCV 창으로 표시
-                cv2.imshow("Live Stream", frame)
-            else:
-                # VOD: 프레임 콜백으로 GUI 내부에 표시
-                if self.frame_callback:
-                    self.frame_callback(frame)
+            
+            if(self.settings['show']):
+                if is_live:
+                    # 실시간: 별도 OpenCV 창으로 표시
+                    cv2.imshow("Live Stream", frame)
+                else:
+                    # VOD: 프레임 콜백으로 GUI 내부에 표시
+                    if self.frame_callback:
+                        self.frame_callback(frame)
                 
 # 트래킹 알고리즘
 # 1. 한프레임 최대 동시인원수

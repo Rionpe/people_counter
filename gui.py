@@ -45,7 +45,8 @@ class PeopleCounterApp(tk.Tk):
         self.src_var = tk.StringVar(value=self.settings_mgr.settings['source'])
         source_frame = tk.Frame(self)
         source_frame.grid(row=3, column=1, sticky="w", padx=10, pady=5)
-        tk.Radiobutton(source_frame, text="YouTube URL", variable=self.src_var, value="YouTube URL", command=self._toggle_source).pack(side=tk.LEFT)
+        tk.Radiobutton(source_frame, text="YouTube URL", variable=self.src_var, value="Y", command=self._toggle_source).pack(side=tk.LEFT)
+        tk.Radiobutton(source_frame, text="로컬 카메라", variable=self.src_var, value="L", command=self._toggle_source).pack(side=tk.LEFT)
         # (필요시 다른 옵션도 추가)
 
         # YouTube URL 입력
@@ -86,7 +87,7 @@ class PeopleCounterApp(tk.Tk):
         self.video_lbl.grid_remove()
 
     def _toggle_source(self):
-        if self.src_var.get()=="YouTube URL":
+        if self.src_var.get()=="Y" or "L":
             self.src_lbl.grid(row=4,column=0,padx=10,pady=5,sticky="w")
             self.src_i.grid(row=4,column=1,padx=10,pady=5,sticky="w")
         else:
